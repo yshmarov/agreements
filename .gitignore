@@ -1,0 +1,11 @@
+/.bundle/
+/.ruby-lsp/
+/coverage/
+/log/
+/pkg/
+/test/dummy/log/*
+/test/dummy/storage/
+/test/tmp/
+/tmp/
+*.gem
+*.rbc

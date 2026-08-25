@@ -1,0 +1,24 @@
+AllCops:
+  Exclude:
+    - "test/tmp/**/*"
+    - "vendor/**/*"
+  NewCops: enable
+  SuggestExtensions: false
+  TargetRubyVersion: 3.2
+
+Layout/LineLength:
+  Max: 120
+
+Metrics/MethodLength:
+  Max: 15
+
+Metrics/BlockLength:
+  Exclude:
+    - "*.gemspec"
+    - "test/test_helper.rb"
+
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+Style/Documentation:
+  Enabled: false

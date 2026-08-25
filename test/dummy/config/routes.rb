@@ -6,4 +6,5 @@ Rails.application.routes.draw do
   get "/agreement", to: "acceptances#show"
   post "/agreement", to: "acceptances#create"
   get "/return-path", to: "acceptances#return_path"
+  get "/namespaced", to: "agreements/host#show"
 end

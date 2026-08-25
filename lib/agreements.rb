@@ -8,6 +8,10 @@ require "agreements/enforcement"
 require "agreements/engine"
 
 module Agreements
+  def self.table_name_prefix
+    "agreements_"
+  end
+
   class << self
     def current_version(agreement_key)
       Version.current_for(agreement_key)

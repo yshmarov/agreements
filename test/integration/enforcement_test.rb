@@ -45,4 +45,10 @@ class EnforcementTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_empty response.body
   end
+
+  test "does not isolate host controllers under the agreements namespace" do
+    get "/namespaced"
+
+    assert_redirected_to "/agreement"
+  end
 end

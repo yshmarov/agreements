@@ -29,7 +29,6 @@ Gem::Specification.new do |spec|
   spec.files = Dir[
     "app/**/*",
     "lib/**/*",
-    "AGENTS.md",
     "CHANGELOG.md",
     "MIT-LICENSE",
     "README.md",

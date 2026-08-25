@@ -6,7 +6,7 @@ Gem::Specification.new do |spec|
   spec.name = "agreements"
   spec.version = Agreements::VERSION
   spec.authors = ["Yaroslav Shmarov"]
-  spec.email = ["yaroslav.shmarov@clickfunnels.com"]
+  spec.email = ["yashm@outlook.com"]
 
   spec.summary = "Auditable acceptance of externally hosted legal agreements for Rails."
   spec.description = <<~DESCRIPTION

@@ -11,10 +11,10 @@ Gem::Specification.new do |spec|
   spec.summary = "Auditable acceptance of externally hosted legal agreements for Rails."
   spec.description = <<~DESCRIPTION
     A small Rails engine that stores immutable external agreement-version
-    metadata and append-only acceptance evidence. It distinguishes the subject
-    bound by an agreement from the actor accepting under recorded authority,
-    rejects stale rendered versions, and leaves documents, authentication,
-    authorization, routes, and UI in the host application.
+    metadata and append-only localized acceptance evidence. It distinguishes
+    the subject bound by an agreement from the actor accepting under recorded
+    authority, rejects stale rendered versions, and leaves documents,
+    authentication, authorization, routes, and UI in the host application.
   DESCRIPTION
   spec.homepage = "https://github.com/yshmarov/agreements"
   spec.license = "MIT"

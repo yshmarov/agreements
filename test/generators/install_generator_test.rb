@@ -17,6 +17,8 @@ class InstallGeneratorTest < Rails::Generators::TestCase
       assert_includes migration, "create_table :agreements_acceptances"
       assert_includes migration, "foreign_key: { to_table: :agreements_versions }"
       assert_includes migration, "index_agreements_acceptances_on_version_and_subject"
+      assert_includes migration, "t.text :acceptance_statement, null: false"
+      assert_includes migration, "t.string :locale, null: false"
     end
     assert_no_file "config/initializers/agreements.rb"
     assert_no_file "config/routes.rb"

@@ -19,19 +19,13 @@ class AgreementsTest < ActiveSupport::TestCase
     current = create_version(version: "2026-09-01")
 
     error = assert_raises(Agreements::VersionNotCurrent) do
-      Agreements.accept!("terms", version_id: previous.id, subject: user, actor: user, authority: "self")
+      Agreements.accept!("terms", **acceptance_attributes(previous, subject: user))
     end
 
     assert_equal current, error.current_version
     assert_empty Agreements::Acceptance.all
 
-    acceptance = Agreements.accept!(
-      "terms",
-      version_id: current.id,
-      subject: user,
-      actor: user,
-      authority: "self"
-    )
+    acceptance = Agreements.accept!("terms", **acceptance_attributes(current, subject: user))
 
     assert_equal current, acceptance.agreement_version
     assert_nil Agreements.pending_version("terms", subject: user)
@@ -44,7 +38,7 @@ class AgreementsTest < ActiveSupport::TestCase
 
     [nil, "not-an-id", other.id].each do |version_id|
       error = assert_raises(Agreements::VersionNotCurrent) do
-        Agreements.accept!("terms", version_id: version_id, subject: user, actor: user, authority: "self")
+        Agreements.accept!("terms", **acceptance_attributes(current, subject: user, version_id: version_id))
       end
 
       assert_equal current, error.current_version

@@ -6,7 +6,7 @@ module Agreements
                class_name: "Agreements::Version",
                inverse_of: :acceptances
 
-    validates :subject_key, :actor_key, :authority, :accepted_at, presence: true
+    validates :subject_key, :actor_key, :authority, :acceptance_statement, :locale, :accepted_at, presence: true
     validates :authority, format: { with: /\A[a-z0-9_]+\z/ }
 
     def readonly?

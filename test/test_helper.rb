@@ -30,6 +30,8 @@ ActiveRecord::Schema.define do
     t.string :subject_key, null: false
     t.string :actor_key, null: false
     t.string :authority, null: false
+    t.text :acceptance_statement, null: false
+    t.string :locale, null: false
     t.datetime :accepted_at, null: false
     t.timestamps
     t.index %i[agreement_version_id subject_key],
@@ -57,6 +59,17 @@ module ActiveSupport
 
     def create_user(name: "Ada")
       User.create!(name: name)
+    end
+
+    def acceptance_attributes(version, subject:, **overrides)
+      {
+        version_id: version.id,
+        subject: subject,
+        actor: subject,
+        authority: "self",
+        acceptance_statement: version.acceptance_statement,
+        locale: "en"
+      }.merge(overrides)
     end
   end
 end

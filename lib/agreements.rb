@@ -23,15 +23,21 @@ module Agreements
       end
     end
 
-    def accept!(agreement_key, version_id:, subject:, actor:, authority:)
+    # Explicit keywords keep this evidence boundary distinct from browser params.
+    # rubocop:disable-next Metrics/ParameterLists
+    def accept!(agreement_key, version_id:, subject:, actor:, authority:, acceptance_statement:, locale:)
       version = current_version(agreement_key)
       raise VersionNotCurrent, version unless version&.id.to_s == version_id.to_s
 
       Recorder.call(
         agreement_version: version,
-        subject: subject,
-        actor: actor,
-        authority: authority
+        evidence: {
+          subject: subject,
+          actor: actor,
+          authority: authority,
+          acceptance_statement: acceptance_statement,
+          locale: locale
+        }
       )
     end
 

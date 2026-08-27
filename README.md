@@ -4,8 +4,8 @@ Auditable acceptance of externally hosted legal agreements for Rails.
 
 `agreements` answers one durable question:
 
-> Which agreement version did this subject accept, who performed the
-> acceptance, under what authority, and when?
+> Which agreement version and localized statement did this subject accept,
+> who performed the acceptance, under what authority, and when?
 
 It deliberately does not host legal documents or provide a legal CMS. Your
 legal or marketing site remains authoritative; the gem stores immutable
@@ -28,6 +28,13 @@ The generator adds two tables and nothing else. There is no route, controller,
 view, initializer, JavaScript, CSS, or admin dashboard to integrate.
 
 Ruby >= 3.2 · Rails >= 7.1 and < 9 · PostgreSQL and SQLite
+
+### Upgrading from 0.1
+
+Version 0.2 adds non-null `acceptance_statement` and `locale` columns to
+`agreements_acceptances`. Add them in a host migration before upgrading. For
+existing evidence, copy each version's canonical statement and use an honest
+locale such as `und` when the displayed locale is unknown.
 
 ## Define a version
 
@@ -79,19 +86,24 @@ application. Submit the exact displayed version as a hidden field:
 Then record only that version while it remains current:
 
 ```ruby
+statement = I18n.t("agreements.user_terms.statement")
+
 acceptance = Agreements.accept!(
   "user_terms",
   version_id: params.dig(:acceptance, :agreement_version_id),
   subject: current_user,
   actor: current_user,
-  authority: "self"
+  authority: "self",
+  acceptance_statement: statement,
+  locale: I18n.locale.to_s
 )
 ```
 
 `Agreements.accept!` resolves the current version server-side, requires the
 submitted ID to match it, derives opaque keys from the server-owned subject and
-actor, and records one acceptance per subject and version. Retries, double
-clicks, and concurrent submissions return the original acceptance.
+actor, and records the exact localized plain-text statement selected by the
+host. Do not accept either value from browser parameters. Retries, double
+clicks, and concurrent submissions return the original acceptance evidence.
 
 A missing, malformed, wrong-agreement, or stale ID raises
 `Agreements::VersionNotCurrent`. Its `current_version` is ready to render:
@@ -112,7 +124,9 @@ Agreements.accept!(
   version_id: params.dig(:acceptance, :agreement_version_id),
   subject: current_organization,
   actor: current_user,
-  authority: "organization_owner"
+  authority: "organization_owner",
+  acceptance_statement: I18n.t("agreements.organization_dpa.statement"),
+  locale: I18n.locale.to_s
 )
 ```
 
@@ -168,6 +182,7 @@ the response contract your application supports.
 - agreement-version foreign key;
 - opaque subject and actor keys;
 - authority;
+- exact localized acceptance statement and locale;
 - server acceptance time;
 - timestamps.
 
@@ -201,7 +216,7 @@ registry alone does not deploy a new version to an existing installation.
 - Draft/publish/activation workflows or an admin dashboard.
 - Electronic signatures or identity proofing.
 - IP addresses, user agents, fingerprints, geolocation, or request provenance.
-- Presentation manifests, snapshots, scroll tracking, or one-time nonces.
+- Presentation manifests, browser snapshots, scroll tracking, or one-time nonces.
 - Consent withdrawal, declarations, attestations, authorizations, retention,
   legal holds, integrity chains, or compliance reporting.
 - Application-specific onboarding, marketing consent, tenancy, ownership,

@@ -18,6 +18,7 @@ bundle exec rake build
 
 - Persist only immutable agreement versions and append-only acceptances.
 - Keep legal documents external; store title, HTTPS URL, and optional SHA-256.
+- Store the exact localized statement shown by the host and its locale.
 - Keep actor and subject separate, with explicit authority and server time.
 - Accept only the submitted version while it remains current.
 - Leave authentication, authorization, tenancy, routes, controllers, views,

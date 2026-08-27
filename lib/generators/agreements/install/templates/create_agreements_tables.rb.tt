@@ -21,6 +21,8 @@ class CreateAgreementsTables < ActiveRecord::Migration<%= migration_version %>
       t.string :subject_key, null: false
       t.string :actor_key, null: false
       t.string :authority, null: false
+      t.text :acceptance_statement, null: false
+      t.string :locale, null: false
       t.datetime :accepted_at, null: false
       t.timestamps
 

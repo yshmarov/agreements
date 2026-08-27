@@ -7,12 +7,15 @@ class AcceptancesController < ApplicationController
 
   def create
     user = User.find(params.require(:user_id))
+    version = Agreements.current_version("terms")
     Agreements.accept!(
       "terms",
       version_id: params.require(:version_id),
       subject: user,
       actor: user,
-      authority: "self"
+      authority: "self",
+      acceptance_statement: version.acceptance_statement,
+      locale: I18n.locale.to_s
     )
     redirect_to agreement_return_location || "/protected?user_id=#{user.id}", status: :see_other
   end

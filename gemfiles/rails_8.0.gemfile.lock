@@ -1,7 +1,7 @@
 PATH
   remote: ..
   specs:
-    agreements (0.1.0)
+    agreements (0.2.0)
       rails (>= 7.1, < 9)
 
 GEM
@@ -274,7 +274,7 @@ CHECKSUMS
   activerecord (8.0.5.1) sha256=9252968fce404d75eb17092498a440d472167f2f8deee32b4658d6552b1eeea7
   activestorage (8.0.5.1) sha256=239742932b2fdcf0ead175e0889dbd385a36da2168fd7bde023aaad88ef745f2
   activesupport (8.0.5.1) sha256=329a4280c4fbcfcf338ae2cb9df28b0b14527929dba105e10b3604516d998710
-  agreements (0.1.0)
+  agreements (0.2.0)
   ast (2.4.3) sha256=954615157c1d6a382bc27d690d973195e79db7f55e9765ac7c481c60bdb4d383
   base64 (0.3.0) sha256=27337aeabad6ffae05c265c450490628ef3ebd4b67be58257393227588f5a97b
   benchmark (0.5.0) sha256=465df122341aedcb81a2a24b4d3bd19b6c67c1530713fd533f3ff034e419236c

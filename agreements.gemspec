@@ -8,13 +8,15 @@ Gem::Specification.new do |spec|
   spec.authors = ["Yaroslav Shmarov"]
   spec.email = ["yashm@outlook.com"]
 
-  spec.summary = "Auditable acceptance of externally hosted legal agreements for Rails."
+  spec.summary = "Record who accepted which version of your Terms, Privacy Notice or DPA, " \
+                 "and ask again when they change."
   spec.description = <<~DESCRIPTION
-    A small Rails engine that stores immutable external agreement-version
-    metadata and append-only localized acceptance evidence. It distinguishes
-    the subject bound by an agreement from the actor accepting under recorded
-    authority, rejects stale rendered versions, and leaves documents,
-    authentication, authorization, routes, and UI in the host application.
+    Versioned acceptance of legal agreements for Rails. Stores which version
+    and which localized sentence was accepted, by whom, for whom (a user or a
+    company), under what authority and when. Redirects users who still have to
+    accept, supports a notice period before new terms take effect, and rejects
+    submissions of an outdated version. Two tables, no UI, no external services.
+    In production at EthicsPortal.
   DESCRIPTION
   spec.homepage = "https://github.com/yshmarov/agreements"
   spec.license = "MIT"
@@ -23,6 +25,7 @@ Gem::Specification.new do |spec|
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "#{spec.homepage}/tree/main"
   spec.metadata["changelog_uri"] = "#{spec.homepage}/blob/main/CHANGELOG.md"
+  spec.metadata["documentation_uri"] = "#{spec.homepage}#readme"
   spec.metadata["bug_tracker_uri"] = "#{spec.homepage}/issues"
   spec.metadata["rubygems_mfa_required"] = "true"
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.1 - 2026-11-12
+
+- Rewrite the README around a quick start, guides and an API reference.
+- Clearer gem summary and description, and a documentation link on RubyGems.
+
 ## 0.4.0 - 2026-11-12
 
 - Add an optional `effective_at` to versions, so a version can be inserted when

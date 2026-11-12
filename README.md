@@ -30,6 +30,11 @@ answer them. This gem can, with two database tables and a few method calls.
 
 ## What it looks like in your app
 
+<img src="docs/acceptance-page.png" width="600" alt="An acceptance page titled 'Accept Terms and Data Processing Agreement for [DEMO] Kieffer &amp; Hoffmann S.A.', with an unticked checkbox, the statement 'I accept the EthicsPortal Terms of Service and Data Processing Agreement on behalf of this organization.' and an 'Accept and continue' button.">
+
+*EthicsPortal's acceptance page for a company's DPA, built on this gem. The gem
+stores and checks the acceptance. The page is a normal view in your app.*
+
 1. **First deploy.** Every signed-in user who has not accepted your Terms is
    sent to your acceptance page on their next page view. They tick the box and
    continue to the page they wanted.

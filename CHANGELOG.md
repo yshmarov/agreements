@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.0 - 2026-11-12
+
+- Add an optional `effective_at` to versions, so a version can be inserted when
+  notice is given and become current on the date it takes effect. Requires a
+  new nullable column; see "Upgrading from 0.3" in the README.
+- Add `Agreements.upcoming_version` to show the next scheduled version.
+- Add `Agreements::TestHelper#accept_agreement` for host test suites.
+- Explain in the README what acceptance evidence does and does not prove.
+
 ## 0.3.0 - 2026-11-12
 
 - Answer pending non-HTML requests with `403 Forbidden` instead of letting them

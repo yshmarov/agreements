@@ -29,6 +29,17 @@ view, initializer, JavaScript, CSS, or admin dashboard to integrate.
 
 Ruby >= 3.2 · Rails >= 7.1 and < 9 · PostgreSQL and SQLite
 
+### Upgrading from 0.3
+
+Version 0.4 adds a nullable `effective_at` column to `agreements_versions`:
+
+```bash
+bin/rails generate migration AddEffectiveAtToAgreementsVersions effective_at:datetime
+bin/rails db:migrate
+```
+
+Existing rows keep `effective_at` empty and stay in effect from their creation.
+
 ### Upgrading from 0.2
 
 Version 0.3 has no schema change. `require_agreement` now answers a pending
@@ -85,9 +96,44 @@ changes later. The final check stops a deploy if a version label already exists
 with different content: a deployed version must never change. Use the same
 create-then-check loop in your seeds.
 
-The newest inserted row for an agreement key is current immediately. There is
-no draft, publish, activate, or scheduling lifecycle. A correction or legal
-update is a new immutable row with a new version label.
+A version without `effective_at` is current as soon as it is inserted. There is
+no draft, publish or activate step. A correction or legal update is a new
+immutable row with a new version label.
+
+### Give notice before a version takes effect
+
+Terms often promise notice before a change applies, for example "at least 14
+days before the changes take effect". Insert the version when you send the
+notice, with the date it takes effect:
+
+```ruby
+VERSION = {
+  agreement_key: "user_terms",
+  version: "2026-12-01",
+  effective_at: Time.utc(2026, 12, 1),
+  # acceptance_statement, documents ...
+}.freeze
+```
+
+Until that time the previous version stays current, nobody is asked to accept,
+and `accept!` refuses the new version. From that time the new version is
+current and every subject who has not accepted it is pending. Show the notice
+in your app with:
+
+```ruby
+Agreements.upcoming_version("user_terms") # => the next scheduled version, or nil
+```
+
+The current version is the one that took effect most recently: its
+`effective_at`, or its creation time when `effective_at` is empty. When two
+versions take effect at the same time, the one inserted later wins.
+
+Subjects cannot accept a scheduled version early. Someone who accepts the
+current version during the notice period is asked again on the effective date.
+
+A scheduled version cannot have acceptances before it takes effect. To cancel
+it, delete it in a data migration with a migration-local model before its
+effective date. After that date it is evidence like any other version.
 
 Document references accept `title`, an HTTPS `url`, an optional 64-character
 `sha256`, and an optional `key`. Use `key` (lowercase letters, digits and
@@ -246,6 +292,29 @@ end
 When no version exists for a key, nothing is pending and nothing is blocked.
 Insert the first version before you rely on enforcement.
 
+## Test your application
+
+Once enforcement is on, most of your tests need subjects that have already
+accepted. Include the test helper:
+
+```ruby
+# test/test_helper.rb
+require "agreements/test_helper"
+
+class ActiveSupport::TestCase
+  include Agreements::TestHelper
+end
+```
+
+```ruby
+accept_agreement("user_terms", subject: user)
+accept_agreement("organization_dpa", subject: organization, actor: owner, authority: "organization_owner")
+```
+
+`accept_agreement` accepts the current version with its canonical statement and
+the `en` locale. It raises when no current version exists, so insert versions
+in your fixtures or setup first.
+
 ## Evidence model
 
 `agreements_versions` contains:
@@ -254,6 +323,7 @@ Insert the first version before you rely on enforcement.
 - human version label;
 - exact acceptance statement;
 - external document references and optional SHA-256 digests;
+- optional effective date;
 - timestamps.
 
 `agreements_acceptances` contains:
@@ -283,11 +353,42 @@ controls.
 
 1. Publish immutable/versioned legal-document URLs and any verified digests.
 2. Add the finished bundle to the host's seed registry.
-3. Add a host data migration that inserts the same immutable version.
-4. Deploy. The new row becomes current and subjects missing it are prompted.
+3. Add a host data migration that inserts the same immutable version, with
+   `effective_at` if your terms promise notice.
+4. Deploy. The new row becomes current at once, or on its effective date, and
+   subjects missing it are prompted.
 
 Production deployments normally run migrations, not seeds. Changing a seed
 registry alone does not deploy a new version to an existing installation.
+
+## What the evidence proves
+
+The gem records which version and which sentence a subject accepted, who did
+it, under what authority, and when. That is the part your application can
+prove later. Some questions it cannot answer for you:
+
+- **The whole page counts.** Courts look at the entire screen, not only the
+  checkbox. In *Berman v. Freedom Financial Network* (9th Cir. 2022) the terms
+  did not bind the user: the notice was small grey text, the links did not
+  look like links, and the button said "Continue" without saying that it meant
+  acceptance. Your layout, contrast and button text decide this. The gem does
+  not see them.
+- **It is not a qualified electronic signature.** Under eIDAS (Regulation (EU)
+  No 910/2014, Article 25), an electronic signature cannot be denied legal
+  effect only because it is electronic or not qualified. A checkbox is still
+  not a qualified electronic signature, and this gem does not create one.
+- **Acknowledging a privacy notice is not consent.** Under the GDPR you inform
+  people (Article 13). Consent (Articles 6 and 7) is a separate, specific and
+  withdrawable choice. Keep the two apart in your copy and your records.
+- **The text of your terms still matters.** In the EU, an unfair term in a
+  consumer contract does not bind the consumer (Directive 93/13/EEC), however
+  clearly it was accepted.
+- **Identity and authority are yours to check.** The gem stores the actor and
+  the authority you pass. It does not verify who the person is or whether they
+  may bind an organization.
+
+Your counsel decides what your agreements need. The gem keeps the record of
+what was accepted.
 
 ## Not this gem
 
@@ -302,7 +403,9 @@ registry alone does not deploy a new version to an existing installation.
   layouts, routes, or copy.
 
 Those are real product categories. They are not prerequisites for proving an
-ordinary Terms or organization-DPA acceptance.
+ordinary Terms or organization-DPA acceptance. If you need consent withdrawal,
+signed receipts, request evidence or a form builder, look at
+[clickwrap](https://github.com/rameerez/clickwrap).
 
 ## Later, only after a concrete trigger
 

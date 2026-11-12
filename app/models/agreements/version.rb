@@ -17,8 +17,29 @@ module Agreements
     validates :version, :acceptance_statement, presence: true
     validate :documents_are_external_references
 
-    def self.current_for(agreement_key)
-      where(agreement_key: agreement_key).order(created_at: :desc, id: :desc).first
+    # Filtering by time in Ruby keeps the SQL identical, so the query cache
+    # serves repeated checks within a request. Each key has only a few versions.
+    def self.current_for(agreement_key, now: Time.current)
+      versions = where(agreement_key: agreement_key).to_a
+      versions.select { |version| version.in_effect?(now) }.max_by(&:precedence)
+    end
+
+    def self.upcoming_for(agreement_key, now: Time.current)
+      scheduled = where(agreement_key: agreement_key).to_a.reject { |version| version.in_effect?(now) }
+      next_from = scheduled.map(&:effective_from).min
+      scheduled.select { |version| version.effective_from == next_from }.max_by(&:precedence)
+    end
+
+    def precedence
+      [effective_from, created_at, id]
+    end
+
+    def effective_from
+      effective_at || created_at
+    end
+
+    def in_effect?(now = Time.current)
+      effective_from <= now
     end
 
     def accepted_by?(subject)

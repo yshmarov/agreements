@@ -17,6 +17,10 @@ module Agreements
       Version.current_for(agreement_key)
     end
 
+    def upcoming_version(agreement_key)
+      Version.upcoming_for(agreement_key)
+    end
+
     def pending_version(agreement_key, subject:)
       current_version(agreement_key).then do |version|
         version unless version.nil? || version.accepted_by?(subject)

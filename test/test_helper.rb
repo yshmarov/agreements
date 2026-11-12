@@ -4,6 +4,7 @@ ENV["RAILS_ENV"] ||= "test"
 
 require_relative "dummy/config/environment"
 require "rails/test_help"
+require "agreements/test_helper"
 
 ActiveRecord::Schema.verbose = false
 ActiveRecord::Schema.define do
@@ -17,6 +18,7 @@ ActiveRecord::Schema.define do
     t.string :version, null: false
     t.text :acceptance_statement, null: false
     t.json :documents, null: false, default: []
+    t.datetime :effective_at
     t.timestamps
     t.index %i[agreement_key version], unique: true
     t.index %i[agreement_key created_at]

@@ -36,6 +36,33 @@ jobs:
           bundler-cache: true
       - run: bundle exec rake test
 
+  postgresql:
+    name: Test (PostgreSQL / Rails 8.1)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: agreements_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      BUNDLE_GEMFILE: gemfiles/rails_8.1.gemfile
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/agreements_test
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "4.0"
+          bundler-cache: true
+      - run: bundle exec rake test
+
   lint:
     name: RuboCop
     runs-on: ubuntu-latest

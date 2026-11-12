@@ -17,6 +17,14 @@ Run the suite against one Rails version from the CI matrix:
 BUNDLE_GEMFILE=gemfiles/rails_7.1.gemfile bundle exec rake test
 ```
 
+The suite uses in-memory SQLite. CI also runs it on PostgreSQL; to do the
+same locally, point `DATABASE_URL` at an empty database:
+
+```bash
+createdb agreements_test
+DATABASE_URL=postgres://localhost/agreements_test bundle exec rake test
+```
+
 ## Scope
 
 - Persist only immutable agreement versions and append-only acceptances.

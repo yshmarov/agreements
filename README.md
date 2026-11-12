@@ -29,6 +29,12 @@ view, initializer, JavaScript, CSS, or admin dashboard to integrate.
 
 Ruby >= 3.2 · Rails >= 7.1 and < 9 · PostgreSQL and SQLite
 
+### Upgrading from 0.2
+
+Version 0.3 has no schema change. `require_agreement` now answers a pending
+non-HTML request with `403 Forbidden` instead of letting it through. If your
+API already checks `pending_version` before calling it, nothing changes.
+
 ### Upgrading from 0.1
 
 Version 0.2 adds non-null `acceptance_statement` and `locale` columns to
@@ -38,29 +44,57 @@ locale such as `und` when the displayed locale is unknown.
 
 ## Define a version
 
-Agreement versions are deployed data. Create them in a data migration and keep
-the same registry in your seeds for fresh databases:
+Agreement versions are deployed data. Insert them in a data migration, and keep
+the same list in your seeds so fresh databases match production:
 
 ```ruby
-Agreements::Version.create!(
-  agreement_key: "user_terms",
-  version: "2026-08-16",
-  acceptance_statement: "I accept the Terms of Service and acknowledge the Privacy Notice.",
-  documents: [
-    { title: "Terms of Service", url: "https://example.com/terms" },
-    { title: "Privacy Notice", url: "https://example.com/privacy" }
-  ]
-)
+class AddUserTerms20260816 < ActiveRecord::Migration[8.1]
+  class Version < ActiveRecord::Base
+    self.table_name = "agreements_versions"
+  end
+
+  VERSION = {
+    agreement_key: "user_terms",
+    version: "2026-08-16",
+    acceptance_statement: "I accept the Terms of Service and acknowledge the Privacy Notice.",
+    documents: [
+      { key: "terms_of_service", title: "Terms of Service", url: "https://example.com/terms-2026-08-16" },
+      { key: "privacy_notice", title: "Privacy Notice", url: "https://example.com/privacy-2026-08-16" }
+    ]
+  }.freeze
+
+  def up
+    version = Version.find_or_create_by!(VERSION.slice(:agreement_key, :version)) do |record|
+      record.assign_attributes(VERSION)
+    end
+
+    unless version.acceptance_statement == VERSION[:acceptance_statement] &&
+           version.documents == VERSION[:documents].as_json
+      raise "#{version.agreement_key} #{version.version} already exists with different content"
+    end
+  end
+
+  def down
+    raise ActiveRecord::IrreversibleMigration, "Agreement versions are evidence"
+  end
+end
 ```
+
+The migration defines its own model so it keeps working when the gem's model
+changes later. The final check stops a deploy if a version label already exists
+with different content: a deployed version must never change. Use the same
+create-then-check loop in your seeds.
 
 The newest inserted row for an agreement key is current immediately. There is
 no draft, publish, activate, or scheduling lifecycle. A correction or legal
 update is a new immutable row with a new version label.
 
-Document references accept `title`, an HTTPS `url`, and an optional 64-character
-`sha256`. The gem validates a supplied digest but does not fetch remote pages,
-calculate hashes, or retain document bytes. Hashing and archival belong in the
-trusted legal-document publishing process.
+Document references accept `title`, an HTTPS `url`, an optional 64-character
+`sha256`, and an optional `key`. Use `key` (lowercase letters, digits and
+underscores) to look up a translated link title, so your views do not depend on
+the English `title`. The gem validates a supplied digest but does not fetch
+remote pages, calculate hashes, or retain document bytes. Hashing and archival
+belong in the trusted legal-document publishing process.
 
 ## Ask what is pending
 
@@ -72,6 +106,19 @@ pending = Agreements.pending_version("user_terms", subject: current_user)
 Subjects and actors may be records responding to `to_global_id`, or explicit
 non-empty opaque strings. The gem stores only the resulting keys; it does not
 own authentication, tenancy, roles, or authorization.
+
+A Global ID contains your application name and the model class, for example
+`gid://my-app/User/1`. If either changes, old acceptances no longer match and
+every subject is asked to accept again. Pin the application name now so a
+module rename cannot change it:
+
+```ruby
+# config/application.rb
+config.global_id.app = "my-app"
+```
+
+Before you rename a model, plan how to carry its acceptances over. Acceptance
+rows are read only through the model API.
 
 ## Render the host-owned form
 
@@ -106,10 +153,13 @@ host. Do not accept either value from browser parameters. Retries, double
 clicks, and concurrent submissions return the original acceptance evidence.
 
 A missing, malformed, wrong-agreement, or stale ID raises
-`Agreements::VersionNotCurrent`. Its `current_version` is ready to render:
+`Agreements::VersionNotCurrent`. Its `current_version` is ready to render. It
+is `nil` when no version exists for that key yet:
 
 ```ruby
 rescue Agreements::VersionNotCurrent => error
+  raise ActiveRecord::RecordNotFound unless error.current_version
+
   @version = error.current_version
   render :show, status: :unprocessable_content
 end
@@ -156,16 +206,45 @@ def require_organization_dpa
 end
 ```
 
-It redirects pending HTML/Turbo requests and remembers only GET or HEAD return
-locations. A blocked mutation is never replayed after acceptance. Consume the
-safe same-origin path after a successful acceptance:
+When the agreement is pending:
+
+- an HTML or Turbo Stream request is redirected to `location` with
+  `303 See Other`, and the method returns `:redirected`;
+- any other request (JSON, CSV, PDF, API) gets an empty `403 Forbidden`, and
+  the method returns `:forbidden`.
+
+The return value lets you skip work that should not run after a halted
+request, such as Pundit's `verify_authorized`:
+
+```ruby
+skip_authorization if require_agreement("organization_dpa", subject: Current.organization, location: path)
+```
+
+Only GET and HEAD return locations are remembered. A blocked mutation is never
+replayed after acceptance. Consume the safe same-origin path after a successful
+acceptance:
 
 ```ruby
 redirect_to agreement_return_location || dashboard_path
 ```
 
-API and headless behavior remains host-owned: use `pending_version` and return
-the response contract your application supports.
+If your API has its own error format, check before `require_agreement` runs:
+
+```ruby
+def require_organization_dpa
+  if api_request?
+    if Agreements.pending_version("organization_dpa", subject: Current.organization)
+      render json: { error: "agreement_required" }, status: :forbidden
+    end
+    return
+  end
+
+  require_agreement("organization_dpa", subject: Current.organization, location: organization_dpa_path(Current.organization))
+end
+```
+
+When no version exists for a key, nothing is pending and nothing is blocked.
+Insert the first version before you rely on enforcement.
 
 ## Evidence model
 

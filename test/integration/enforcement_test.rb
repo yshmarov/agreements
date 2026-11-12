@@ -29,21 +29,25 @@ class EnforcementTest < ActionDispatch::IntegrationTest
     assert_redirected_to "/protected?user_id=#{user.id}"
   end
 
-  test "does not redirect non-HTML requests" do
+  test "refuses pending non-HTML requests without redirecting" do
     user = create_user
-    create_version
+    version = create_version
 
     get "/protected.json", params: { user_id: user.id }
+    assert_response :forbidden
 
+    Agreements.accept!("terms", **acceptance_attributes(version, subject: user))
+    get "/protected.json", params: { user_id: user.id }
     assert_response :success
-    assert_equal "protected", response.body
   end
 
   test "rejects unsafe stored return paths" do
-    get "/return-path", params: { path: "//attacker.example" }
+    ["//attacker.example", "/\\attacker.example", "https://attacker.example/"].each do |path|
+      get "/return-path", params: { path: path }
 
-    assert_response :success
-    assert_empty response.body
+      assert_response :success
+      assert_empty response.body, path
+    end
   end
 
   test "does not isolate host controllers under the agreements namespace" do

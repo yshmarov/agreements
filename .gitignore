@@ -9,3 +9,4 @@
 /tmp/
 *.gem
 *.rbc
+.DS_Store

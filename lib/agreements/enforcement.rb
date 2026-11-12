@@ -9,8 +9,12 @@ module Agreements
     private
 
     def require_agreement(agreement_key, subject:, location:)
-      return unless agreement_enforcement_request?
       return unless Agreements.pending_version(agreement_key, subject: subject)
+
+      unless agreement_enforcement_request?
+        head :forbidden
+        return :forbidden
+      end
 
       remember_agreement_return_location
       redirect_to location, status: :see_other
@@ -30,8 +34,7 @@ module Agreements
     end
 
     def agreement_return_location
-      path = session.delete(:return_to_after_agreement)
-      path if path&.start_with?("/") && !path.start_with?("//")
+      url_from(session.delete(:return_to_after_agreement))
     end
   end
 end

@@ -5,6 +5,7 @@ require "uri"
 module Agreements
   class Version < ApplicationRecord
     SHA256_PATTERN = /\A[0-9a-f]{64}\z/i
+    KEY_PATTERN = /\A[a-z0-9_]+\z/
 
     has_many :acceptances,
              class_name: "Agreements::Acceptance",
@@ -12,7 +13,7 @@ module Agreements
              inverse_of: :agreement_version,
              dependent: :restrict_with_exception
 
-    validates :agreement_key, presence: true, format: { with: /\A[a-z0-9_]+\z/ }, uniqueness: { scope: :version }
+    validates :agreement_key, presence: true, format: { with: KEY_PATTERN }, uniqueness: { scope: :version }
     validates :version, :acceptance_statement, presence: true
     validate :documents_are_external_references
 
@@ -51,13 +52,18 @@ module Agreements
     end
 
     def allowed_document_attributes?(attributes)
-      attributes.keys.all? { |key| %w[title url sha256].include?(key) }
+      attributes.keys.all? { |key| %w[key title url sha256].include?(key) }
     end
 
     def complete_document_attributes?(attributes)
       attributes["title"].present? &&
         external_https_url?(attributes["url"]) &&
-        valid_sha256?(attributes["sha256"])
+        valid_sha256?(attributes["sha256"]) &&
+        valid_document_key?(attributes["key"])
+    end
+
+    def valid_document_key?(key)
+      key.nil? || key.to_s.match?(KEY_PATTERN)
     end
 
     def external_https_url?(url)

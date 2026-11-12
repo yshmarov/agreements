@@ -36,5 +36,8 @@ Gem::Specification.new do |spec|
   ]
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "rails", ">= 7.1", "< 9"
+  spec.add_dependency "actionpack", ">= 7.1", "< 9"
+  spec.add_dependency "activerecord", ">= 7.1", "< 9"
+  spec.add_dependency "globalid", ">= 1.0"
+  spec.add_dependency "railties", ">= 7.1", "< 9"
 end

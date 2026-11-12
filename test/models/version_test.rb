@@ -23,6 +23,13 @@ class VersionTest < ActiveSupport::TestCase
     assert_predicate version, :persisted?
   end
 
+  test "accepts a stable document key for localized links" do
+    version = create_version(documents: [{ key: "terms_of_service", title: "Terms", url: "https://example.com/terms" }])
+
+    assert_predicate version, :persisted?
+    assert_not create_version_with_document_key("Terms of Service").valid?
+  end
+
   test "rejects unknown document metadata and malformed digests" do
     version = Agreements::Version.new(
       agreement_key: "terms",
@@ -41,5 +48,16 @@ class VersionTest < ActiveSupport::TestCase
     assert_raises(ActiveRecord::ReadOnlyRecord) { version.update!(acceptance_statement: "Changed") }
     assert_raises(ActiveRecord::ReadOnlyRecord) { version.destroy! }
     assert_raises(ActiveRecord::ReadOnlyRecord) { version.delete }
+  end
+
+  private
+
+  def create_version_with_document_key(key)
+    Agreements::Version.new(
+      agreement_key: "terms",
+      version: "two",
+      acceptance_statement: "I accept.",
+      documents: [{ key: key, title: "Terms", url: "https://example.com/terms" }]
+    )
   end
 end
